@@ -22,7 +22,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const res = await fetch("/api/auth/me", { credentials: "include" });
       if (res.ok) {
         const data = await res.json();
-        setUser(data);
+        setUser(data.user); // CHANGED: Extract user property
       } else {
         setUser(null);
       }
@@ -40,14 +40,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = async (email: string, password: string) => {
     const res = await apiRequest("POST", "/api/auth/login", { email, password });
     const data = await res.json();
-    setUser(data);
+    setUser(data.user); // CHANGED: Extract user property
     queryClient.invalidateQueries();
   };
 
   const register = async (data: { email: string; password: string; name: string; yearLevel?: number }) => {
     const res = await apiRequest("POST", "/api/auth/register", data);
     const userData = await res.json();
-    setUser(userData);
+    setUser(userData.user); // CHANGED: Extract user property
     queryClient.invalidateQueries();
   };
 
