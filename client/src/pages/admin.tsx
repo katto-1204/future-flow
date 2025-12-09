@@ -22,6 +22,7 @@ import {
   Award,
   Activity,
   ChevronRight,
+  Trophy,
 } from "lucide-react";
 import {
   ResponsiveContainer,
@@ -37,6 +38,23 @@ import {
   Pie,
   Cell,
 } from "recharts";
+
+type RankingEntry = {
+  userId: string;
+  name: string;
+  score: number;
+  skillsCount: number;
+  completedGoals: number;
+  overallProgress: number;
+  gpa: number | null;
+  rank: number;
+};
+
+type RankingResponse = {
+  leaderboard: RankingEntry[];
+  currentUser: RankingEntry | null;
+  total: number;
+};
 
 const CHART_COLORS = [
   "hsl(35, 95%, 52%)",
@@ -102,6 +120,10 @@ export default function AdminPage() {
     totalResources: number;
   }>({
     queryKey: ["/api/dashboard/stats"],
+  });
+
+  const { data: ranking, isLoading: rankingLoading } = useQuery<RankingResponse>({
+    queryKey: ["/api/students/ranking"],
   });
 
   // Sample data for charts
@@ -194,6 +216,59 @@ export default function AdminPage() {
             icon={TrendingUp}
           />
         </div>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between gap-4">
+            <div>
+              <CardTitle className="font-display">Top Students</CardTitle>
+              <CardDescription>Ranking by skills, completed goals, progress, and GPA</CardDescription>
+            </div>
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+              <Trophy className="h-5 w-5 text-primary" />
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {rankingLoading ? (
+              <div className="space-y-3">
+                {[...Array(5)].map((_, i) => (
+                  <div key={i} className="flex items-center gap-3 rounded-lg border p-3">
+                    <Skeleton className="h-10 w-10 rounded-full" />
+                    <div className="flex-1 space-y-2">
+                      <Skeleton className="h-4 w-32" />
+                      <Skeleton className="h-3 w-24" />
+                    </div>
+                    <Skeleton className="h-6 w-12" />
+                  </div>
+                ))}
+              </div>
+            ) : ranking && ranking.leaderboard.length > 0 ? (
+              <div className="space-y-3">
+                {ranking.leaderboard.slice(0, 10).map((entry) => (
+                  <div key={entry.userId} className="flex items-center gap-3 rounded-lg border p-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary font-semibold">
+                      #{entry.rank}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium truncate">{entry.name}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {entry.skillsCount} skills • {entry.completedGoals} completed • GPA {entry.gpa !== null ? entry.gpa.toFixed(2) : "—"}
+                      </p>
+                    </div>
+                    <Badge variant="secondary">{entry.score}</Badge>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-8 text-center">
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted">
+                  <Trophy className="h-6 w-6 text-muted-foreground" />
+                </div>
+                <h4 className="mt-3 font-medium">No ranking data yet</h4>
+                <p className="text-sm text-muted-foreground">Student data is required to build the leaderboard.</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
         <div className="grid gap-6 lg:grid-cols-2">
           <Card>

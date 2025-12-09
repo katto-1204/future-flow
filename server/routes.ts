@@ -5,6 +5,7 @@ import {
   profiles, savedOpportunities, progressRecords, academicModules 
 } from "@shared/schema";
 import { eq, desc, and } from "drizzle-orm";
+import { storage } from "./storage";
 
 // Middleware to check authentication
 function requireAuth(req: Request, res: Response, next: NextFunction) {
@@ -442,40 +443,28 @@ export function registerRoutes(app: express.Application) {
       });
 
       if (user?.role === "admin") {
-        // Admin stats
-        const totalStudents = await db.query.users.findMany({
-          where: eq(users.role, "student"),
-        });
-        const totalCareers = await db.query.careers.findMany();
-        const totalOpportunities = await db.query.opportunities.findMany();
-        const totalResources = await db.query.resources.findMany();
-
+        const adminStats = await storage.getAdminStats();
         res.json({
-          totalStudents: totalStudents.length,
-          totalCareers: totalCareers.length,
-          totalOpportunities: totalOpportunities.length,
-          totalResources: totalResources.length,
+          totalStudents: adminStats.totalUsers,
+          totalCareers: adminStats.totalCareers,
+          totalOpportunities: adminStats.totalOpportunities,
+          totalResources: adminStats.totalResources,
         });
       } else {
-        // Student stats
-        const userGoals = await db.query.goals.findMany({
-          where: eq(goals.userId, req.session.userId!),
-        });
-        const completedGoals = userGoals.filter(g => g.status === "completed").length;
-        const totalOpportunities = await db.query.opportunities.findMany();
-        const userProfile = await db.query.profiles.findFirst({
-          where: eq(profiles.userId, req.session.userId!),
-        });
-
-        res.json({
-          totalGoals: userGoals.length,
-          completedGoals,
-          skillsCount: userProfile?.skills?.length || 0,
-          opportunitiesAvailable: totalOpportunities.length,
-        });
+        const stats = await storage.getDashboardStats(req.session.userId!);
+        res.json(stats);
       }
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch dashboard stats" });
+    }
+  });
+
+  app.get("/api/students/ranking", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const ranking = await storage.getStudentRanking(req.session.userId!);
+      res.json(ranking);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch student ranking" });
     }
   });
 

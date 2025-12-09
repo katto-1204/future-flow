@@ -89,6 +89,31 @@ export interface IStorage {
     careersCount: number;
     overallProgress: number;
   }>;
+
+  // Student Ranking
+  getStudentRanking(viewerId: string): Promise<{
+    leaderboard: Array<{
+      userId: string;
+      name: string;
+      score: number;
+      skillsCount: number;
+      completedGoals: number;
+      overallProgress: number;
+      gpa: number | null;
+      rank: number;
+    }>;
+    currentUser: {
+      userId: string;
+      name: string;
+      score: number;
+      skillsCount: number;
+      completedGoals: number;
+      overallProgress: number;
+      gpa: number | null;
+      rank: number;
+    } | null;
+    total: number;
+  }>;
   
   // Admin Stats
   getAdminStats(): Promise<{
@@ -389,17 +414,97 @@ export class DatabaseStorage implements IStorage {
     const userGoals = await db.select().from(goals).where(eq(goals.userId, userId));
     const profile = await this.getProfile(userId);
     const allCareers = await db.select().from(careers);
-    
+
     const completedGoals = userGoals.filter(g => g.status === "completed").length;
+    const activeGoals = userGoals.filter(g => g.status !== "completed");
     const totalProgress = userGoals.reduce((sum, g) => sum + (g.progress || 0), 0);
     const overallProgress = userGoals.length > 0 ? Math.round(totalProgress / userGoals.length) : 0;
-    
+
+    const skills = profile?.skills || [];
+    const recommendedCareers = skills.length
+      ? await this.getRecommendedCareers(skills, 5)
+      : allCareers.slice(0, 5);
+
     return {
-      goalsCount: userGoals.filter(g => g.status === "in_progress").length,
+      goalsCount: activeGoals.length,
       completedGoals,
-      skillsCount: profile?.skills?.length || 0,
-      careersCount: allCareers.length,
+      skillsCount: skills.length,
+      careersCount: recommendedCareers.length,
       overallProgress,
+    };
+  }
+
+  async getStudentRanking(viewerId: string): Promise<{
+    leaderboard: Array<{
+      userId: string;
+      name: string;
+      score: number;
+      skillsCount: number;
+      completedGoals: number;
+      overallProgress: number;
+      gpa: number | null;
+      rank: number;
+    }>;
+    currentUser: {
+      userId: string;
+      name: string;
+      score: number;
+      skillsCount: number;
+      completedGoals: number;
+      overallProgress: number;
+      gpa: number | null;
+      rank: number;
+    } | null;
+    total: number;
+  }> {
+    const students = await db.select().from(users).where(eq(users.role, "student"));
+    const allProfiles = await db.select().from(profiles);
+    const allGoals = await db.select().from(goals);
+
+    const profilesByUser = new Map(allProfiles.map(profile => [profile.userId, profile]));
+    const goalsByUser = new Map<string, Goal[]>();
+
+    allGoals.forEach(goal => {
+      const list = goalsByUser.get(goal.userId) || [];
+      list.push(goal);
+      goalsByUser.set(goal.userId, list);
+    });
+
+    const leaderboard = students
+      .map(student => {
+        const profile = profilesByUser.get(student.id);
+        const userGoals = goalsByUser.get(student.id) || [];
+
+        const skillsCount = profile?.skills?.length || 0;
+        const completedGoals = userGoals.filter(g => g.status === "completed").length;
+        const totalProgress = userGoals.reduce((sum, g) => sum + (g.progress || 0), 0);
+        const overallProgress = userGoals.length ? Math.round(totalProgress / userGoals.length) : 0;
+        const gpa = profile?.gpa ?? null;
+
+        // Composite score blending skills, completions, progress, and GPA (normalized to 20 pts)
+        const gpaScore = gpa ? (gpa / 4) * 20 : 0;
+        const score = skillsCount * 2 + completedGoals * 5 + overallProgress * 0.4 + gpaScore;
+
+        return {
+          userId: student.id,
+          name: student.name,
+          score: Math.round(score * 100) / 100,
+          skillsCount,
+          completedGoals,
+          overallProgress,
+          gpa,
+          rank: 0,
+        };
+      })
+      .sort((a, b) => b.score - a.score)
+      .map((entry, index) => ({ ...entry, rank: index + 1 }));
+
+    const currentUser = leaderboard.find(item => item.userId === viewerId) || null;
+
+    return {
+      leaderboard,
+      currentUser,
+      total: leaderboard.length,
     };
   }
 
@@ -410,7 +515,10 @@ export class DatabaseStorage implements IStorage {
     totalOpportunities: number;
     totalResources: number;
   }> {
-    const [usersResult] = await db.select({ count: sql<number>`count(*)` }).from(users);
+    const [usersResult] = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(users)
+      .where(eq(users.role, "student"));
     const [goalsResult] = await db.select({ count: sql<number>`count(*)` }).from(goals);
     const [opportunitiesResult] = await db.select({ count: sql<number>`count(*)` }).from(opportunities);
     const [resourcesResult] = await db.select({ count: sql<number>`count(*)` }).from(resources);

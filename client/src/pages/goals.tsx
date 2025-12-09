@@ -31,7 +31,7 @@ import {
   Flag,
   Lightbulb,
 } from "lucide-react";
-import type { Goal } from "@shared/schema";
+import type { Goal, Profile } from "@shared/schema";
 
 const goalSchema = z.object({
   title: z.string().min(1, "Title is required"),
@@ -329,6 +329,10 @@ export default function GoalsPage() {
   const [editingGoal, setEditingGoal] = useState<Goal | null>(null);
   const [activeTab, setActiveTab] = useState("all");
 
+  const { data: profile } = useQuery<Profile>({
+    queryKey: ["/api/profile"],
+  });
+
   const { data: goals, isLoading } = useQuery<Goal[]>({
     queryKey: ["/api/goals"],
   });
@@ -340,6 +344,8 @@ export default function GoalsPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/goals"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/goals", "recent"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/dashboard/stats"] });
       setIsDialogOpen(false);
       toast({ title: "Goal created successfully" });
     },
@@ -350,11 +356,13 @@ export default function GoalsPage() {
 
   const updateGoalMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: Partial<GoalFormData & { progress: number }> }) => {
-      const res = await apiRequest("PATCH", `/api/goals/${id}`, data);
+      const res = await apiRequest("PUT", `/api/goals/${id}`, data);
       return res.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/goals"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/goals", "recent"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/dashboard/stats"] });
       setIsDialogOpen(false);
       setEditingGoal(null);
       toast({ title: "Goal updated successfully" });
@@ -364,12 +372,30 @@ export default function GoalsPage() {
     },
   });
 
+  const addSkillFromGoalMutation = useMutation({
+    mutationFn: async (skillName: string) => {
+      const currentSkills = profile?.skills || [];
+      const merged = Array.from(new Set([...currentSkills, skillName]));
+      const res = await apiRequest("POST", "/api/profile", { skills: merged });
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/profile"] });
+      toast({ title: "Skills updated", description: "Goal completion added to your skills" });
+    },
+    onError: (error: any) => {
+      toast({ title: "Failed to update skills", description: error.message, variant: "destructive" });
+    },
+  });
+
   const deleteGoalMutation = useMutation({
     mutationFn: async (id: string) => {
       await apiRequest("DELETE", `/api/goals/${id}`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/goals"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/goals", "recent"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/dashboard/stats"] });
       toast({ title: "Goal deleted successfully" });
     },
     onError: (error: any) => {
@@ -391,7 +417,15 @@ export default function GoalsPage() {
   };
 
   const handleUpdateProgress = (id: string, progress: number) => {
-    updateGoalMutation.mutate({ id, data: { progress } });
+    const data: any = { progress };
+    if (progress >= 100) {
+      data.status = "completed";
+      const goal = goals?.find((g) => g.id === id);
+      if (goal?.title) {
+        addSkillFromGoalMutation.mutate(goal.title);
+      }
+    }
+    updateGoalMutation.mutate({ id, data });
   };
 
   const handleDelete = (id: string) => {

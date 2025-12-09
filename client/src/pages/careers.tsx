@@ -115,7 +115,7 @@ function CareerCard({
   );
 }
 
-function CareerDetail({ career, onClose }: { career: Career; onClose: () => void }) {
+function CareerDetail({ career, onClose, onAddToGoals, isAdmin }: { career: Career; onClose: () => void; onAddToGoals: (career: Career) => void; isAdmin: boolean; }) {
   const Icon = careerIcons[career.icon || "default"] || careerIcons.default;
   const learningPath = career.learningPath as { phase: string; items: string[] }[] | null;
 
@@ -229,9 +229,11 @@ function CareerDetail({ career, onClose }: { career: Career; onClose: () => void
         <Button variant="outline" onClick={onClose}>
           Close
         </Button>
-        <Button>
-          Add to Goals
-        </Button>
+        {!isAdmin && (
+          <Button onClick={() => onAddToGoals(career)}>
+            Add to Goals
+          </Button>
+        )}
       </div>
     </DialogContent>
   );
@@ -279,6 +281,33 @@ export default function CareersPage() {
     },
     onError: () => {
       toast({ title: "Failed to delete career", variant: "destructive" });
+    },
+  });
+
+  const addGoalFromCareerMutation = useMutation({
+    mutationFn: async (career: Career) => {
+      const payload = {
+        title: career.title,
+        description: career.description,
+        type: "long-term" as const,
+        specific: `Pursue the ${career.title} pathway`,
+        measurable: "Complete required skills and learning path milestones",
+        achievable: "Follow recommended tools and learning path",
+        relevant: career.industry || "Career growth",
+        timeBound: "Set timeline in Goals page",
+      };
+      const res = await apiRequest("POST", "/api/goals", payload);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/goals"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/goals", "recent"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/dashboard/stats"] });
+      toast({ title: "Goal added", description: "Career added to your goals" });
+      setSelectedCareer(null);
+    },
+    onError: (error: any) => {
+      toast({ title: "Failed to add goal", description: error.message, variant: "destructive" });
     },
   });
 
@@ -501,6 +530,8 @@ export default function CareersPage() {
             <CareerDetail
               career={selectedCareer}
               onClose={() => setSelectedCareer(null)}
+              onAddToGoals={(career) => addGoalFromCareerMutation.mutate(career)}
+              isAdmin={isAdmin}
             />
           )}
         </Dialog>

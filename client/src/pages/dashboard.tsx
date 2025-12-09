@@ -18,8 +18,26 @@ import {
   Sparkles,
   Calendar,
   GraduationCap,
+  Trophy,
 } from "lucide-react";
 import type { Goal, Career, Opportunity, ProgressRecord } from "@shared/schema";
+
+type RankingEntry = {
+  userId: string;
+  name: string;
+  score: number;
+  skillsCount: number;
+  completedGoals: number;
+  overallProgress: number;
+  gpa: number | null;
+  rank: number;
+};
+
+type RankingResponse = {
+  leaderboard: RankingEntry[];
+  currentUser: RankingEntry | null;
+  total: number;
+};
 
 function StatCard({
   title,
@@ -173,6 +191,10 @@ export default function DashboardPage() {
     queryKey: ["/api/opportunities", "latest"],
   });
 
+  const { data: ranking, isLoading: rankingLoading } = useQuery<RankingResponse>({
+    queryKey: ["/api/students/ranking"],
+  });
+
   const getGreeting = () => {
     const hour = new Date().getHours();
     if (hour < 12) return "Good morning";
@@ -238,7 +260,7 @@ export default function DashboardPage() {
           )}
         </div>
 
-        <div className="grid gap-6 lg:grid-cols-2">
+        <div className="grid gap-6 lg:grid-cols-3">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between gap-4">
               <div>
@@ -336,6 +358,79 @@ export default function DashboardPage() {
                   <Button asChild className="mt-4">
                     <Link href="/profile">Update Profile</Link>
                   </Button>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between gap-4">
+              <div>
+                <CardTitle className="font-display">Student Ranking</CardTitle>
+                <CardDescription>Score based on skills, goals, and GPA</CardDescription>
+              </div>
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+                <Trophy className="h-5 w-5 text-primary" />
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {rankingLoading ? (
+                <div className="space-y-3">
+                  {[...Array(3)].map((_, i) => (
+                    <div key={i} className="flex items-center gap-3 rounded-lg border p-3">
+                      <Skeleton className="h-10 w-10 rounded-full" />
+                      <div className="flex-1 space-y-2">
+                        <Skeleton className="h-4 w-32" />
+                        <Skeleton className="h-3 w-24" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : ranking && ranking.leaderboard.length > 0 ? (
+                <>
+                  <div className="rounded-lg border bg-muted/50 p-3">
+                    <p className="text-xs text-muted-foreground">Your rank</p>
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-3xl font-bold font-display">
+                        {ranking.currentUser ? `#${ranking.currentUser.rank}` : "—"}
+                      </span>
+                      {ranking.currentUser && (
+                        <span className="text-sm text-muted-foreground">
+                          Score {ranking.currentUser.score}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="space-y-3">
+                    {ranking.leaderboard.slice(0, 5).map((entry) => (
+                      <div
+                        key={entry.userId}
+                        className={`flex items-center gap-3 rounded-lg border p-3 ${
+                          ranking.currentUser?.userId === entry.userId ? "border-primary/60 bg-primary/5" : ""
+                        }`}
+                      >
+                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary font-semibold">
+                          #{entry.rank}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium truncate">{entry.name}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {entry.skillsCount} skills • {entry.completedGoals} completed goals • GPA {entry.gpa !== null ? entry.gpa.toFixed(2) : "—"}
+                          </p>
+                        </div>
+                        <Badge variant="secondary">{entry.score}</Badge>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              ) : (
+                <div className="flex flex-col items-center justify-center py-6 text-center">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted">
+                    <Trophy className="h-6 w-6 text-muted-foreground" />
+                  </div>
+                  <h4 className="mt-3 font-medium">No ranking data yet</h4>
+                  <p className="text-sm text-muted-foreground">Add skills, complete goals, and track GPA to appear here.</p>
                 </div>
               )}
             </CardContent>

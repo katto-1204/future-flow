@@ -174,6 +174,7 @@ export default function ResourcesPage() {
     url: "",
     tags: ""
   });
+  const [isComingSoonOpen, setIsComingSoonOpen] = useState(false);
 
   const { data: resources, isLoading } = useQuery<Resource[]>({
     queryKey: ["/api/resources"],
@@ -217,6 +218,11 @@ export default function ResourcesPage() {
   });
 
   const handleDownload = (resource: Resource) => {
+    if (!isAdmin) {
+      setIsComingSoonOpen(true);
+      return;
+    }
+
     downloadMutation.mutate(resource.id);
     if (resource.url) {
       window.open(resource.url, "_blank");
@@ -459,6 +465,19 @@ export default function ResourcesPage() {
               </CardContent>
             </Card>
           )
+        )}
+
+        {!isAdmin && (
+          <Dialog open={isComingSoonOpen} onOpenChange={setIsComingSoonOpen}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Resources coming soon</DialogTitle>
+                <DialogDescription>
+                  Downloads will be available shortly. Please check back soon.
+                </DialogDescription>
+              </DialogHeader>
+            </DialogContent>
+          </Dialog>
         )}
 
         {/* Create Resource Dialog */}
