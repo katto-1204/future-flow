@@ -17,6 +17,7 @@ import ProgressPage from "@/pages/progress";
 import AcademicPage from "@/pages/academic";
 import AdminPage from "@/pages/admin";
 import StudentsPage from "@/pages/students";
+import StudentDetailPage from "@/pages/student-detail";
 
 function ProtectedRoute({ component: Component }: { component: React.ComponentType }) {
   const { user, isLoading } = useAuth();
@@ -94,6 +95,7 @@ function Router() {
       <Route path="/academic" component={() => <ProtectedRoute component={AcademicPage} />} />
       <Route path="/admin" component={() => <AdminRoute component={AdminPage} />} />
       <Route path="/students" component={() => <AdminRoute component={StudentsPage} />} />
+      <Route path="/students/:id" component={() => <AdminRoute component={StudentDetailPage} />} />
       <Route component={NotFound} />
     </Switch>
   );

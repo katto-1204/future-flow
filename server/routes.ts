@@ -586,11 +586,46 @@ export function registerRoutes(app: express.Application) {
     try {
       const students = await db.query.users.findMany({
         where: eq(users.role, "student"),
-        orderBy: [desc(users.createdAt)],
       });
       res.json(students);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch students" });
+    }
+  });
+
+  // Get specific student's profile (admin only)
+  app.get("/api/admin/students/:id/profile", requireAdmin, async (req: Request, res: Response) => {
+    try {
+      const studentId = req.params.id;
+
+      // Get user
+      const user = await db.query.users.findFirst({
+        where: eq(users.id, studentId),
+      });
+
+      if (!user) {
+        return res.status(404).json({ error: "Student not found" });
+      }
+
+      // Get profile
+      const userProfile = await db.query.profiles.findFirst({
+        where: eq(profiles.userId, studentId),
+      });
+
+      // Include user info with profile
+      res.json({
+        ...userProfile,
+        user: {
+          name: user.name,
+          email: user.email,
+          yearLevel: user.yearLevel,
+          course: user.course,
+          avatarUrl: user.avatarUrl,
+        }
+      });
+    } catch (error) {
+      console.error("Failed to fetch student profile:", error);
+      res.status(500).json({ error: "Failed to fetch student profile" });
     }
   });
 

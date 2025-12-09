@@ -179,9 +179,23 @@ export default function StudentsPage() {
                         <p className="text-xs text-muted-foreground mt-1">{student.course}</p>
                       )}
                     </div>
-                    <Button variant="outline" size="sm">
-                      View Analytics
-                    </Button>
+                    <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setSelectedStudent(student)}
+                      >
+                        <BarChart3 className="mr-2 h-4 w-4" />
+                        Analytics
+                      </Button>
+                      <Button
+                        size="sm"
+                        onClick={() => window.location.href = `/students/${student.id}`}
+                      >
+                        <FileText className="mr-2 h-4 w-4" />
+                        View Profile
+                      </Button>
+                    </div>
                   </div>
                 ))}
               </div>

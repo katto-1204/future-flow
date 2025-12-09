@@ -314,19 +314,21 @@ export default function ResourcesPage() {
           </div>
         </div>
 
-        <Tabs value={activeCategory} onValueChange={setActiveCategory}>
-          <TabsList className="flex-wrap h-auto gap-1">
-            {categories.map((category) => (
-              <TabsTrigger
-                key={category.id}
-                value={category.id}
-                data-testid={`tab-category-${category.id}`}
-              >
-                {category.label}
-              </TabsTrigger>
-            ))}
-          </TabsList>
-        </Tabs>
+            <Tabs value={activeCategory} onValueChange={setActiveCategory}>
+              <TabsList className="flex-wrap h-auto gap-1">
+                {categories.map((category) => (
+                  <TabsTrigger
+                    key={category.id}
+                    value={category.id}
+                    data-testid={`tab-category-${category.id}`}
+                  >
+                    {category.label}
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+            </Tabs>
+          </>
+        )}
 
         {isAdmin ? (
           <Card>
