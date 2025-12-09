@@ -14,7 +14,7 @@ import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Slider } from "@/components/ui/slider";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -443,6 +443,9 @@ export default function GoalsPage() {
                 <DialogTitle className="font-display">
                   {editingGoal ? "Edit Goal" : "Create New Goal"}
                 </DialogTitle>
+                <DialogDescription>
+                  {editingGoal ? "Update your academic or career goal" : "Set a new goal to track your progress"}
+                </DialogDescription>
               </DialogHeader>
               <GoalForm
                 goal={editingGoal}

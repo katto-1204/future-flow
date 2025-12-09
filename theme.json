@@ -1,5 +1,9 @@
 {
   "name": "Neon Connect",
+  "primary": "neutral",
+  "variant": "shadcn",
+  "appearance": "light",
+  "radius": "0.5",
   "theme": {
     "light": {
       "background": "0 0% 100%",

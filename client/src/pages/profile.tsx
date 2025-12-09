@@ -14,7 +14,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useAuth } from "@/lib/auth";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -35,6 +35,170 @@ import {
 } from "lucide-react";
 import type { Profile } from "@shared/schema";
 
+// Comprehensive skill suggestions for Computer Engineering students
+const SUGGESTED_SKILLS = {
+  programming: [
+    "Python", "JavaScript", "TypeScript", "Java", "C", "C++", "C#", "Go", "Rust",
+    "React", "Node.js", "Angular", "Vue.js", "Next.js", "Express.js",
+    "HTML", "CSS", "Tailwind CSS", "Bootstrap"
+  ],
+  hardware: [
+    "Verilog", "VHDL", "SystemVerilog", "FPGA Programming", "VLSI Design",
+    "Circuit Design", "PCB Design", "Digital Logic", "Analog Electronics",
+    "Microcontrollers", "Arduino", "Raspberry Pi", "ARM", "RISC-V"
+  ],
+  embedded: [
+    "Embedded C", "RTOS", "FreeRTOS", "I2C", "SPI", "UART", "CAN",
+    "Embedded Linux", "Device Drivers", "Firmware Development"
+  ],
+  networking: [
+    "TCP/IP", "HTTP/HTTPS", "DNS", "Routing", "Switching", "Cisco",
+    "Network Security", "Firewalls", "VPN", "SDN", "5G", "IoT"
+  ],
+  databases: [
+    "SQL", "PostgreSQL", "MySQL", "MongoDB", "Redis", "Firebase",
+    "Database Design", "NoSQL", "SQLite"
+  ],
+  tools: [
+    "Git", "GitHub", "Docker", "Kubernetes", "Jenkins", "CI/CD",
+    "Linux", "Windows", "VS Code", "IntelliJ IDEA", "Eclipse",
+    "MATLAB", "Simulink", "LabVIEW", "Quartus", "Vivado", "ModelSim"
+  ],
+  cloud: [
+    "AWS", "Azure", "Google Cloud", "Cloud Computing", "Serverless",
+    "Lambda", "EC2", "S3", "API Gateway"
+  ],
+  ai_ml: [
+    "Machine Learning", "Deep Learning", "TensorFlow", "PyTorch",
+    "scikit-learn", "Keras", "Neural Networks", "Computer Vision", "NLP"
+  ],
+  other: [
+    "Agile", "Scrum", "Problem Solving", "Team Collaboration",
+    "Technical Writing", "Project Management", "REST APIs", "GraphQL",
+    "Testing", "Debugging", "Data Structures", "Algorithms"
+  ]
+};
+
+const ALL_SKILLS = Object.values(SUGGESTED_SKILLS).flat().sort();
+
+// Interest suggestions
+const SUGGESTED_INTERESTS = [
+  "Artificial Intelligence",
+  "Machine Learning",
+  "Deep Learning",
+  "Embedded Systems",
+  "IoT (Internet of Things)",
+  "Robotics",
+  "VLSI Design",
+  "Digital Design",
+  "Analog Circuit Design",
+  "Web Development",
+  "Mobile App Development",
+  "Cloud Computing",
+  "Cybersecurity",
+  "Network Engineering",
+  "Database Systems",
+  "Computer Vision",
+  "Natural Language Processing",
+  "Blockchain Technology",
+  "Quantum Computing",
+  "Edge Computing",
+  "5G Technology",
+  "Wireless Communications",
+  "Signal Processing",
+  "Control Systems",
+  "Automotive Electronics",
+  "Medical Devices",
+  "Power Electronics",
+  "Renewable Energy Systems",
+  "Smart Grid Technology",
+  "Computer Architecture",
+  "Operating Systems",
+  "Distributed Systems",
+  "Game Development",
+  "AR/VR Development",
+  "Data Science",
+  "Big Data Analytics",
+  "DevOps",
+  "Microservices",
+  "Semiconductor Technology",
+].sort();
+
+// Career preferences suggestions
+const SUGGESTED_CAREERS = [
+  "Software Engineer",
+  "Full Stack Developer",
+  "Frontend Developer",
+  "Backend Developer",
+  "Mobile Developer",
+  "DevOps Engineer",
+  "Cloud Architect",
+  "Data Scientist",
+  "Machine Learning Engineer",
+  "AI Engineer",
+  "VLSI Design Engineer",
+  "ASIC Design Engineer",
+  "FPGA Engineer",
+  "Hardware Engineer",
+  "Embedded Systems Engineer",
+  "Firmware Engineer",
+  "IoT Engineer",
+  "Robotics Engineer",
+  "Network Engineer",
+  "Network Architect",
+  "Security Engineer",
+  "Cybersecurity Analyst",
+  "Systems Engineer",
+  "Database Administrator",
+  "Data Engineer",
+  "Solutions Architect",
+  "Technical Lead",
+  "Engineering Manager",
+  "Product Manager",
+  "Research Engineer",
+  "Test Engineer",
+  "Quality Assurance Engineer",
+  "Site Reliability Engineer",
+  "Platform Engineer",
+].sort();
+
+// Certification suggestions
+const SUGGESTED_CERTIFICATIONS = [
+  "AWS Certified Solutions Architect",
+  "AWS Certified Developer",
+  "AWS Certified Cloud Practitioner",
+  "Microsoft Azure Fundamentals",
+  "Microsoft Azure Administrator",
+  "Google Cloud Professional",
+  "Cisco CCNA",
+  "Cisco CCNP",
+  "CompTIA A+",
+  "CompTIA Network+",
+  "CompTIA Security+",
+  "Certified Ethical Hacker (CEH)",
+  "CISSP",
+  "Certified Information Systems Auditor (CISA)",
+  "PMP (Project Management Professional)",
+  "Scrum Master (CSM)",
+  "Oracle Certified Professional",
+  "Red Hat Certified Engineer",
+  "Certified Kubernetes Administrator",
+  "Docker Certified Associate",
+  "Tableau Desktop Specialist",
+  "Power BI Certification",
+  "Google Analytics Certification",
+  "TensorFlow Developer Certificate",
+  "Certified LabVIEW Developer",
+  "Certified SolidWorks Professional",
+  "AutoCAD Certified User",
+  "ITIL Foundation",
+  "Six Sigma Green Belt",
+  "FE Exam (Fundamentals of Engineering)",
+  "PE License (Professional Engineer)",
+  "Arm Accredited Engineer",
+  "FPGA Programming Certification",
+].sort();
+
 const profileSchema = z.object({
   bio: z.string().optional(),
   gpa: z.string().optional(),
@@ -53,6 +217,7 @@ function SkillsSection({
   onAdd,
   onRemove,
   placeholder,
+  suggestions,
 }: {
   title: string;
   icon: React.ElementType;
@@ -60,16 +225,21 @@ function SkillsSection({
   onAdd: (item: string) => void;
   onRemove: (index: number) => void;
   placeholder: string;
+  suggestions?: string[];
 }) {
-  const [newItem, setNewItem] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
   const [isAdding, setIsAdding] = useState(false);
 
-  const handleAdd = () => {
-    if (newItem.trim()) {
-      onAdd(newItem.trim());
-      setNewItem("");
-      setIsAdding(false);
-    }
+  const filteredSuggestions = suggestions?.filter(
+    skill => 
+      !items.includes(skill) && 
+      skill.toLowerCase().includes(searchQuery.toLowerCase())
+  ).slice(0, 10) || [];
+
+  const handleAdd = (skill: string) => {
+    onAdd(skill);
+    setSearchQuery("");
+    setIsAdding(false);
   };
 
   return (
@@ -92,17 +262,37 @@ function SkillsSection({
       </CardHeader>
       <CardContent>
         {isAdding && (
-          <div className="mb-4 flex gap-2">
+          <div className="mb-4 space-y-2">
             <Input
-              value={newItem}
-              onChange={(e) => setNewItem(e.target.value)}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
               placeholder={placeholder}
-              onKeyDown={(e) => e.key === "Enter" && handleAdd()}
               data-testid={`input-new-${title.toLowerCase().replace(/\s+/g, "-")}`}
+              autoFocus
             />
-            <Button onClick={handleAdd} size="sm">
-              Add
-            </Button>
+            {filteredSuggestions.length > 0 && (
+              <div className="max-h-48 overflow-y-auto rounded-lg border bg-popover p-2 space-y-1">
+                {filteredSuggestions.map((skill) => (
+                  <button
+                    key={skill}
+                    onClick={() => handleAdd(skill)}
+                    className="w-full text-left px-3 py-2 text-sm rounded-md hover:bg-accent transition-colors"
+                  >
+                    {skill}
+                  </button>
+                ))}
+              </div>
+            )}
+            {searchQuery && !filteredSuggestions.some(s => s.toLowerCase() === searchQuery.toLowerCase()) && (
+              <Button 
+                onClick={() => handleAdd(searchQuery)} 
+                size="sm" 
+                variant="outline"
+                className="w-full"
+              >
+                Add "{searchQuery}"
+              </Button>
+            )}
           </div>
         )}
         {items.length > 0 ? (
@@ -137,7 +327,10 @@ function SkillsSection({
 export default function ProfilePage() {
   const { user, refetchUser } = useAuth();
   const { toast } = useToast();
-  const [isEditing, setIsEditing] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editingBio, setEditingBio] = useState("");
+  const [editingGpa, setEditingGpa] = useState("");
+  const [editingSubjects, setEditingSubjects] = useState("");
 
   const { data: profile, isLoading } = useQuery<Profile>({
     queryKey: ["/api/profile"],
@@ -160,7 +353,13 @@ export default function ProfilePage() {
 
   const updateProfileMutation = useMutation({
     mutationFn: async (data: Partial<ProfileFormData>) => {
-      const res = await apiRequest("PATCH", "/api/profile", data);
+      const res = await fetch("/api/profile", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error("Failed to update profile");
       return res.json();
     },
     onSuccess: () => {
@@ -250,10 +449,98 @@ export default function ProfilePage() {
                   </Badge>
                   <Badge variant="outline">{user?.course || "Computer Engineering"}</Badge>
                 </div>
-                <Button variant="outline" className="mt-4 w-full" data-testid="button-edit-profile">
-                  <Edit className="mr-2 h-4 w-4" />
-                  Edit Profile
-                </Button>
+                <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="mt-4 w-full"
+                      data-testid="button-edit-profile"
+                      onClick={() => {
+                        setEditingBio(profile?.bio || "");
+                        setEditingGpa(profile?.gpa?.toString() || "");
+                        setEditingSubjects(profile?.subjectsTaken?.join(", ") || "");
+                      }}
+                    >
+                      <Edit className="mr-2 h-4 w-4" />
+                      Edit Profile
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-2xl">
+                    <DialogHeader>
+                      <DialogTitle>Edit Profile</DialogTitle>
+                      <DialogDescription>
+                        Update your bio, GPA, and subjects taken
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                      <div>
+                        <Label htmlFor="bio">Bio</Label>
+                        <Textarea
+                          id="bio"
+                          value={editingBio}
+                          onChange={(e) => setEditingBio(e.target.value)}
+                          placeholder="Tell us about yourself..."
+                          rows={4}
+                        />
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <Label htmlFor="gpa">GPA</Label>
+                          <Input
+                            id="gpa"
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            max="4"
+                            value={editingGpa}
+                            onChange={(e) => setEditingGpa(e.target.value)}
+                            placeholder="e.g., 3.5"
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <Label htmlFor="subjects">Subjects Taken (comma-separated)</Label>
+                        <Textarea
+                          id="subjects"
+                          value={editingSubjects}
+                          onChange={(e) => setEditingSubjects(e.target.value)}
+                          placeholder="e.g., Data Structures, Algorithms, Web Development"
+                          rows={3}
+                        />
+                      </div>
+                      <div className="flex justify-end gap-2">
+                        <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+                          Cancel
+                        </Button>
+                        <Button
+                          onClick={() => {
+                            const gpaValue = editingGpa ? parseFloat(editingGpa) : undefined;
+                            const subjectsList = editingSubjects
+                              ? editingSubjects.split(",").map(s => s.trim()).filter(Boolean)
+                              : undefined;
+                            
+                            updateProfileMutation.mutate({
+                              bio: editingBio || undefined,
+                              gpa: gpaValue,
+                              subjectsTaken: subjectsList,
+                            });
+                            setIsEditDialogOpen(false);
+                          }}
+                          disabled={updateProfileMutation.isPending}
+                        >
+                          {updateProfileMutation.isPending ? (
+                            <>
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                              Saving...
+                            </>
+                          ) : (
+                            "Save Changes"
+                          )}
+                        </Button>
+                      </div>
+                    </div>
+                  </DialogContent>
+                </Dialog>
               </div>
             </CardContent>
           </Card>
@@ -319,6 +606,7 @@ export default function ProfilePage() {
             title="Skills"
             icon={Award}
             items={skills}
+            suggestions={ALL_SKILLS}
             onAdd={(item) => {
               const updated = [...skills, item];
               setLocalSkills(updated);
@@ -329,13 +617,14 @@ export default function ProfilePage() {
               setLocalSkills(updated);
               handleUpdateArray("skills", updated);
             }}
-            placeholder="e.g., Python, JavaScript, Circuit Design"
+            placeholder="Search skills (e.g., Python, React, VLSI)"
           />
 
           <SkillsSection
             title="Interests"
             icon={Heart}
             items={interests}
+            suggestions={SUGGESTED_INTERESTS}
             onAdd={(item) => {
               const updated = [...interests, item];
               setLocalInterests(updated);
@@ -346,13 +635,14 @@ export default function ProfilePage() {
               setLocalInterests(updated);
               handleUpdateArray("interests", updated);
             }}
-            placeholder="e.g., Artificial Intelligence, Embedded Systems"
+            placeholder="Search interests (e.g., AI, Embedded Systems)"
           />
 
           <SkillsSection
             title="Career Preferences"
             icon={Briefcase}
             items={careerPrefs}
+            suggestions={SUGGESTED_CAREERS}
             onAdd={(item) => {
               const updated = [...careerPrefs, item];
               setLocalCareerPrefs(updated);
@@ -363,13 +653,14 @@ export default function ProfilePage() {
               setLocalCareerPrefs(updated);
               handleUpdateArray("careerPreferences", updated);
             }}
-            placeholder="e.g., Software Engineer, Systems Architect"
+            placeholder="Search careers (e.g., Software Engineer, VLSI Engineer)"
           />
 
           <SkillsSection
             title="Certifications"
             icon={FileText}
             items={certs}
+            suggestions={SUGGESTED_CERTIFICATIONS}
             onAdd={(item) => {
               const updated = [...certs, item];
               setLocalCerts(updated);
@@ -380,7 +671,7 @@ export default function ProfilePage() {
               setLocalCerts(updated);
               handleUpdateArray("certifications", updated);
             }}
-            placeholder="e.g., AWS Certified, Cisco CCNA"
+            placeholder="Search certifications (e.g., AWS Certified, CCNA)"
           />
         </div>
       </div>

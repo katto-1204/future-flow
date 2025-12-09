@@ -16,6 +16,7 @@ import ResourcesPage from "@/pages/resources";
 import ProgressPage from "@/pages/progress";
 import AcademicPage from "@/pages/academic";
 import AdminPage from "@/pages/admin";
+import StudentsPage from "@/pages/students";
 
 function ProtectedRoute({ component: Component }: { component: React.ComponentType }) {
   const { user, isLoading } = useAuth();
@@ -72,10 +73,17 @@ function PublicRoute({ component: Component }: { component: React.ComponentType 
 }
 
 function Router() {
+  const { user } = useAuth();
+
   return (
     <Switch>
-      <Route path="/" component={() => <ProtectedRoute component={DashboardPage} />} />
+      <Route path="/" component={() => {
+        if (!user) return <Redirect to="/auth" />;
+        // Route based on role: admin goes to admin panel by default, student to dashboard
+        return user.role === "admin" ? <Redirect to="/admin" /> : <ProtectedRoute component={DashboardPage} />;
+      }} />
       <Route path="/auth" component={() => <PublicRoute component={AuthPage} />} />
+      {/* Admin has access to everything */}
       <Route path="/profile" component={() => <ProtectedRoute component={ProfilePage} />} />
       <Route path="/goals" component={() => <ProtectedRoute component={GoalsPage} />} />
       <Route path="/careers" component={() => <ProtectedRoute component={CareersPage} />} />
@@ -85,6 +93,7 @@ function Router() {
       <Route path="/progress" component={() => <ProtectedRoute component={ProgressPage} />} />
       <Route path="/academic" component={() => <ProtectedRoute component={AcademicPage} />} />
       <Route path="/admin" component={() => <AdminRoute component={AdminPage} />} />
+      <Route path="/students" component={() => <AdminRoute component={StudentsPage} />} />
       <Route component={NotFound} />
     </Switch>
   );

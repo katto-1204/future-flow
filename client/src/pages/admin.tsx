@@ -96,14 +96,12 @@ export default function AdminPage() {
   }
 
   const { data: stats, isLoading } = useQuery<{
-    totalUsers: number;
-    activeUsers: number;
+    totalStudents: number;
     totalCareers: number;
     totalOpportunities: number;
     totalResources: number;
-    totalTraining: number;
   }>({
-    queryKey: ["/api/admin/stats"],
+    queryKey: ["/api/dashboard/stats"],
   });
 
   // Sample data for charts
@@ -135,12 +133,12 @@ export default function AdminPage() {
   ];
 
   const sampleStats = {
-    totalUsers: stats?.totalUsers || 189,
-    activeUsers: stats?.activeUsers || 142,
-    totalCareers: stats?.totalCareers || 24,
-    totalOpportunities: stats?.totalOpportunities || 38,
-    totalResources: stats?.totalResources || 156,
-    totalTraining: stats?.totalTraining || 18,
+    totalUsers: stats?.totalStudents || 0,
+    activeUsers: Math.floor((stats?.totalStudents || 0) * 0.75),
+    totalCareers: stats?.totalCareers || 0,
+    totalOpportunities: stats?.totalOpportunities || 0,
+    totalResources: stats?.totalResources || 0,
+    totalTraining: 5,
   };
 
   return (
@@ -160,7 +158,7 @@ export default function AdminPage() {
 
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           <StatCard
-            title="Total Users"
+            title="Total Students"
             value={sampleStats.totalUsers}
             description={`${sampleStats.activeUsers} active this month`}
             icon={Users}
@@ -169,25 +167,25 @@ export default function AdminPage() {
             title="Career Pathways"
             value={sampleStats.totalCareers}
             icon={Briefcase}
-            href="/admin/careers"
+            href="/careers"
           />
           <StatCard
             title="Opportunities"
             value={sampleStats.totalOpportunities}
             icon={Building2}
-            href="/admin/opportunities"
+            href="/opportunities"
           />
           <StatCard
             title="Resources"
             value={sampleStats.totalResources}
             icon={BookOpen}
-            href="/admin/resources"
+            href="/resources"
           />
           <StatCard
             title="Training Programs"
             value={sampleStats.totalTraining}
             icon={GraduationCap}
-            href="/admin/training"
+            href="/resources"
           />
           <StatCard
             title="Avg. Progress"
@@ -317,27 +315,21 @@ export default function AdminPage() {
             </CardHeader>
             <CardContent className="space-y-3">
               <Button asChild className="w-full justify-start" variant="outline">
-                <Link href="/admin/careers">
+                <Link href="/careers">
                   <Briefcase className="mr-2 h-4 w-4" />
                   Manage Career Pathways
                 </Link>
               </Button>
               <Button asChild className="w-full justify-start" variant="outline">
-                <Link href="/admin/opportunities">
+                <Link href="/opportunities">
                   <Building2 className="mr-2 h-4 w-4" />
                   Manage Opportunities
                 </Link>
               </Button>
               <Button asChild className="w-full justify-start" variant="outline">
-                <Link href="/admin/resources">
+                <Link href="/resources">
                   <BookOpen className="mr-2 h-4 w-4" />
                   Manage Resources
-                </Link>
-              </Button>
-              <Button asChild className="w-full justify-start" variant="outline">
-                <Link href="/admin/training">
-                  <GraduationCap className="mr-2 h-4 w-4" />
-                  Manage Training Programs
                 </Link>
               </Button>
             </CardContent>

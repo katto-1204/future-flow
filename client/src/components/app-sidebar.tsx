@@ -11,6 +11,7 @@ import {
   Settings,
   LogOut,
   Shield,
+  Users,
 } from "lucide-react";
 import {
   Sidebar,
@@ -42,10 +43,10 @@ const studentMenuItems = [
 
 const adminMenuItems = [
   { title: "Admin Dashboard", url: "/admin", icon: Shield },
-  { title: "Manage Careers", url: "/admin/careers", icon: Briefcase },
-  { title: "Manage Opportunities", url: "/admin/opportunities", icon: Building2 },
-  { title: "Manage Resources", url: "/admin/resources", icon: BookOpen },
-  { title: "Manage Training", url: "/admin/training", icon: GraduationCap },
+  { title: "Students", url: "/students", icon: Users },
+  { title: "Careers", url: "/careers", icon: Briefcase },
+  { title: "Opportunities", url: "/opportunities", icon: Building2 },
+  { title: "Resources", url: "/resources", icon: BookOpen },
 ];
 
 export function AppSidebar() {
@@ -53,7 +54,7 @@ export function AppSidebar() {
   const { user, logout } = useAuth();
 
   const isAdmin = user?.role === "admin";
-  const menuItems = isAdmin ? [...studentMenuItems, ...adminMenuItems] : studentMenuItems;
+  const menuItems = isAdmin ? adminMenuItems : studentMenuItems;
 
   const getInitials = (name: string) => {
     return name
@@ -91,7 +92,7 @@ export function AppSidebar() {
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {studentMenuItems.map((item) => (
+              {menuItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton
                     asChild
@@ -108,35 +109,6 @@ export function AppSidebar() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
-
-        {isAdmin && (
-          <>
-            <SidebarSeparator />
-            <SidebarGroup>
-              <SidebarGroupLabel className="font-display text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                Administration
-              </SidebarGroupLabel>
-              <SidebarGroupContent>
-                <SidebarMenu>
-                  {adminMenuItems.map((item) => (
-                    <SidebarMenuItem key={item.title}>
-                      <SidebarMenuButton
-                        asChild
-                        isActive={location === item.url}
-                        data-testid={`nav-admin-${item.title.toLowerCase().replace(/\s+/g, "-")}`}
-                      >
-                        <Link href={item.url}>
-                          <item.icon className="h-4 w-4" />
-                          <span>{item.title}</span>
-                        </Link>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  ))}
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </SidebarGroup>
-          </>
-        )}
       </SidebarContent>
 
       <SidebarFooter className="p-4">
