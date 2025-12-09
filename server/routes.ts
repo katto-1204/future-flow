@@ -657,7 +657,7 @@ export function registerRoutes(app: express.Application) {
       // Get progress records
       const records = await db.query.progressRecords.findMany({
         where: eq(progressRecords.userId, studentId),
-        orderBy: [desc(progressRecords.createdAt)],
+        orderBy: [desc(progressRecords.recordedAt)],
       });
 
       // Get latest level for each skill

@@ -334,7 +334,7 @@ export default function StudentsPage() {
                     )}
 
                     <div className="grid gap-4 md:grid-cols-2">
-                      {analytics.profile.interests.length > 0 && (
+                      {analytics.profile.interests && analytics.profile.interests.length > 0 && (
                         <Card>
                           <CardHeader>
                             <CardTitle className="text-base flex items-center gap-2">
@@ -352,7 +352,7 @@ export default function StudentsPage() {
                         </Card>
                       )}
 
-                      {analytics.profile.careerPreferences.length > 0 && (
+                      {analytics.profile.careerPreferences && analytics.profile.careerPreferences.length > 0 && (
                         <Card>
                           <CardHeader>
                             <CardTitle className="text-base flex items-center gap-2">
@@ -370,7 +370,7 @@ export default function StudentsPage() {
                         </Card>
                       )}
 
-                      {analytics.profile.certifications.length > 0 && (
+                      {analytics.profile.certifications && analytics.profile.certifications.length > 0 && (
                         <Card>
                           <CardHeader>
                             <CardTitle className="text-base flex items-center gap-2">
